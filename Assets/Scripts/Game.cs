@@ -5,24 +5,21 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
+    public static Game instance;
+    
     [Header("Offsets")]
-    [SerializeField] private float destroyersSpeed = 30;
-    [SerializeField] private float destroyersMaxSpeed = 500f;
-    [SerializeField] private float destroyersUpgradeOffset = 10;
-    [SerializeField] private int coinIncreaseAmountAtStart = 2;
     [SerializeField] private int playerPlatformIndex = 0;
-    [SerializeField] private float increasingSpeedWaitingTime = 10;
+    [SerializeField] private int timeToGetCoin = 1;
+    [SerializeField] private int coinIncreaseAmount = 1;
     
     [Space] [Header("GameMode")] 
     [SerializeField] private bool inGame;
     
     [Space][Header("GameObjects")]
     [SerializeField] private Transform destroyersCenter;
-    [SerializeField] private Destroyer rotatingThing;
     [SerializeField] private TextMeshProUGUI coinTextUI;
     [SerializeField] private GameObject gameOverMenu;
     [SerializeField] private XMLManager xmlData;
-    [SerializeField] private Transform ground;
 
     [Space][Header("Prefabs")]
     [SerializeField] private Transform[] playerPrefabs;
@@ -30,85 +27,66 @@ public class Game : MonoBehaviour
     [SerializeField] private Transform[] playerPlatforms;
 
     [Space][Header("SetByTheGame")]
-    [SerializeField] private List<automatePlayer> automatePlayersInGame;
-    
+    [SerializeField] private List<PlayersOrigin> players;
+
+    private bool alive = true;
     private int _coin;
     private Transform _playerCharacterPrefab;
-
     private bool _getCoin = true;
-    private float _minimumSpeed;
-    
     private List<int> _receivedCharacters;
     private int _playerCharacterIndex;
 
-    private bool _increaseSpeed = true;
-    
-    
     private void Awake()
     {
+        instance = this;
+        
         LoadData();
-        rotatingThing.SetSpeed(destroyersSpeed);
-        _minimumSpeed = destroyersSpeed;
 
     }
 
     void Update()
     {
-        if (_getCoin)
+        if (alive &&_getCoin)
         {
             _getCoin = false;
             StartCoroutine(TimeToGetCoin());
         }
-
-        if (_increaseSpeed)
-        {
-            _increaseSpeed = false;
-            StartCoroutine(IncreaseDestroyersSpeed());
-        }
-        
-    }
-    private IEnumerator IncreaseDestroyersSpeed()
-    {
-        yield return new WaitForSeconds(increasingSpeedWaitingTime);
-        
-        if(destroyersSpeed < destroyersMaxSpeed)
-        {
-            destroyersSpeed += destroyersUpgradeOffset;
             
-            
-            rotatingThing.SetSpeed(destroyersSpeed);
-            foreach (automatePlayer ap in automatePlayersInGame)
-            {
-                ap.SetDestroyersSpeed(destroyersSpeed);
-            }
-        }
-        // if(increasingSpeedWaitingTime > 5) increasingSpeedWaitingTime -=0.1; 
-        // by uncommenting the above line the time to increase speed will get shorter until it becomes 5
-        _increaseSpeed = true;
-
     }
 
-    public void Died()
+    private void GameOver()
     {
-        destroyersCenter.GetComponent<Destroyer>().enabled = false;
         SaveData();
         gameOverMenu.SetActive(true);
     }
     private IEnumerator TimeToGetCoin()
     {
-        Debug.Log(90 / destroyersSpeed);
-        yield return new WaitForSeconds(90 / destroyersSpeed);
+        yield return new WaitForSeconds((float)90 / timeToGetCoin);
         GetCoin();
         _getCoin = true;
     }
 
     public void GetCoin()
     {
-        int coinIncreaseAmount = coinIncreaseAmountAtStart * (int)(destroyersSpeed / _minimumSpeed);
         _coin += coinIncreaseAmount;
         SetCoinInGameScene();
     }
 
+    public void AddPlayer(PlayersOrigin newPlayer)
+    {
+        newPlayer.SetInGame(inGame);
+        players.Add(newPlayer);
+    }
+
+    public void RemovePlayer(PlayersOrigin newPlayer)
+    {
+        players.Remove(newPlayer);
+        if (players.Count <= 0)
+        {
+            GameOver();
+        }
+    }
+    
     private void SetCoinInGameScene()
     {
         if(inGame)
@@ -178,22 +156,8 @@ public class Game : MonoBehaviour
         Vector3 direction = destroyersCenter.transform.position - playerPlatforms[platformIndex].position;
         direction.y = 0f;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        Transform player = Instantiate(playerPrefab, playerPlatforms[platformIndex].position, lookRotation);
-        player.GetComponent<PlayersOrigin>().SetInGame(inGame);
-
-        if(player.GetComponent<Player>() != null)
-            player.GetComponent<Player>().SetGame(this);
-        if (player.GetComponent<automatePlayer>() != null)
-        {
-            player.GetComponent<automatePlayer>().SetDestroyersCenter(destroyersCenter);
-            player.GetComponent<automatePlayer>().SetDestroyersSpeed(destroyersSpeed);
-            
-            automatePlayersInGame.Add(player.GetComponent<automatePlayer>());
-        }
-
+        Instantiate(playerPrefab, playerPlatforms[platformIndex].position, lookRotation);
     }
-
-
-
+    
 }
 

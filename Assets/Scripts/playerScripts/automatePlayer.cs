@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -10,8 +8,6 @@ public class automatePlayer : PlayersOrigin
     [SerializeField]private float crunchAnimationLength;
     
     private Transform target;
-    private Transform destroyersCenter;
-    private float destroyerCurrentSpeed;
 
     private bool isWaitingToTakeAction = false;
     private float time = 0;
@@ -126,12 +122,12 @@ public class automatePlayer : PlayersOrigin
 
     private float CalculateRemainingTimeBeforeCollision(Transform bar)
     {
-        Vector3 barVector = bar.position - destroyersCenter.position;
-        Vector3 playerVector = transform.position - destroyersCenter.position;
+        Vector3 barVector = bar.position - bar.GetComponent<Bar>().GetDestroyerCenter().position;
+        Vector3 playerVector = transform.position - bar.GetComponent<Bar>().GetDestroyerCenter().position;
 
         float angle =  GetCircularDistance(barVector, playerVector);
 
-        return angle / destroyerCurrentSpeed;
+        return angle / bar.GetComponent<Bar>().GetDestroyerSpeed();
     }
     private float GetCircularDistance(Vector3 point1, Vector3 point2)
     {
@@ -142,15 +138,7 @@ public class automatePlayer : PlayersOrigin
         
         return circularDistance;
     }
-
-    public void SetDestroyersSpeed(float newSpeed)
-    {
-        destroyerCurrentSpeed = newSpeed;
-    }
-    public void SetDestroyersCenter(Transform center)
-    {
-        destroyersCenter = center;
-    }
+    
 
     
 }

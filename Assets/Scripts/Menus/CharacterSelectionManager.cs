@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -16,6 +17,12 @@ public class CharacterSelectionManager : MonoBehaviour
     
     [SerializeField] private TextMeshProUGUI buttonText;
     [SerializeField] private TextMeshProUGUI coinText;
+
+    [SerializeField] private Button nextButton;
+    [SerializeField] private Button previousButton;
+
+    [SerializeField] private Color chosenCharacterButtonColor;
+
     
     
     private Transform _currentPlayer;
@@ -36,7 +43,14 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             _playerIndexInScene++;
             ChangePlayer();
+            if (!previousButton.interactable)
+                previousButton.interactable = true;
+            if (_playerIndexInScene == playerPrefabs.Length - 1)
+            {
+                nextButton.interactable = false;
+            }
         }
+
             
     }
 
@@ -46,6 +60,12 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             _playerIndexInScene--;
             ChangePlayer();
+            if (!nextButton.interactable)
+                nextButton.interactable = true;
+            if (_playerIndexInScene == 0)
+            {
+                previousButton.interactable = false;
+            }
         }
     }
 
@@ -117,7 +137,14 @@ public class CharacterSelectionManager : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(direction);
         _currentPlayer = Instantiate(playerPrefabs[_playerIndexInScene], playerPlatform.position, lookRotation);
 
-        SetButtonText(_receivedCharacters.Contains(_playerIndexInScene) ? "Use" : charactersValue[_playerIndexInScene].ToString());
+        if (_receivedCharacters.Contains(_playerIndexInScene))
+        {
+            
+            SetButtonText("Use");
+
+        }
+        else 
+            SetButtonText(charactersValue[_playerIndexInScene].ToString());
     }
 
     private void SetButtonText(string text)
